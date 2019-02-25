@@ -14,7 +14,9 @@ import android.widget.Toast;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -40,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         SharedPreferences sharedpreferences = getSharedPreferences("FirebaseLabApp", Context.MODE_PRIVATE);
 
+
+        subscribeToNotificationsTopic();
         from = sharedpreferences.getString(FROM_KEY, null);
 
         chat = FirebaseFirestore.getInstance()
@@ -90,7 +94,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initMessageUpdateListener() {
-        chat.addSnapshotListener((newChatSnapShot, error) -> {
+        chat.orderBy(TIMESTAMP_KEY, Query.Direction.ASCENDING).
+        addSnapshotListener((newChatSnapShot, error) -> {
                     if (error != null) {
                         Log.e(TAG, error.getLocalizedMessage());
                         return;
@@ -114,5 +119,19 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
     }
+
+    private void subscribeToNotificationsTopic() {
+        FirebaseMessaging.getInstance().subscribeToTopic(DOCUMENT_KEY)
+                .addOnCompleteListener(task -> {
+                            String msg = "Subscribed to notifications";
+                            if (!task.isSuccessful()) {
+                                msg = "Subscribe to notifications failed";
+                            }
+                            Log.d(TAG, msg);
+                            Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+                        }
+                );
+    }
+
 
 }
